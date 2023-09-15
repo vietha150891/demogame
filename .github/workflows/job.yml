@@ -1,0 +1,36 @@
+name: BloggerPost
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_name:
+        description: ''
+        required: true
+      job_data:
+        description: ''
+      token:
+        description: ''
+        required: true
+
+#concurrency: 
+#  group: ${{ github.workflow }}-${{ github.ref }}
+#  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+    - uses: actions/checkout@master
+    
+    - name: docker registry login
+      run: echo "${{  secrets.DOCKER_CONTAINER_REGISTRY_TOKEN }}" | docker login ghcr.io --username hoangweb --password-stdin
+      
+    - name: Run cron
+      if: success()
+      run: |
+        docker run \
+        -e JOB_NAME="${{ github.event.inputs.job_name }}" \
+        -e JOB_DATA="${{ github.event.inputs.job_data }}" \
+        -e TOKEN="${{ github.event.inputs.token }}" \
+        ghcr.io/cffgnu/bloggergame:latest
